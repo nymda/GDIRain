@@ -44,16 +44,15 @@ namespace GDIRain
         public void spawnDrop()
         {
             int newY = bg.Height;
-            int newX = rnd.Next(0, bg.Width);
-            int newZ = rnd.Next(0, 10);
+            int newX = rnd.Next(0, bg.Width + (bg.Width / 4));
+            int newZ = rnd.Next(5, 20);
             int newlen = rnd.Next(5, 15);
             drops.Add(new droplet(newY, newX, newZ, newlen));
         }
 
         private void drawFrame_Tick(object sender, EventArgs e)
         {
-            spawnDrop();
-            spawnDrop();
+            spawnDropsByWinWidth();
             g.FillRectangle(Brushes.Gray, 0, 0, bg.Width, bg.Height);
             for(int i = 0; i < drops.Count; i++)
             {
@@ -61,16 +60,41 @@ namespace GDIRain
                 int drawY = drops[i].y;
                 int length = drops[i].length;
                 drawY = bg.Height - drawY;
-                if(drawY < bg.Height - 1)
-                {
-                    g.DrawLine(thick, drawX, drawY, drawX, drawY - length);
-                    drops[i].y -= (1 * drops[i].z) * 2;
-                }
-
+                g.DrawLine(thick, drawX, drawY, drawX + 3, drawY - length);
+                drops[i].y -= (1 * drops[i].z);
+                drops[i].x -= 3;
             }
             pictureBox1.Image = bg;
+            drops = cullDrops();
         }
 
+        public void spawnDropsByWinWidth()
+        {
+            int cdrop = this.Width / 50;
+            for(int i = 0; i < cdrop; i++)
+            {
+                spawnDrop();
+            }
+        }
+
+        public List<droplet> cullDrops()
+        {
+            List<droplet> ret = new List<droplet> { };
+            foreach(droplet d in drops)
+            {
+                if(d.y > 0 && d.y < bg.Height)
+                {
+                    ret.Add(d);
+                }
+            }
+            return ret;
+        }
+
+        private void main_resized(object sender, EventArgs e)
+        {
+            bg = new Bitmap(this.Width, this.Height);
+            g = Graphics.FromImage(bg);
+        }
     }
 
     public class droplet
