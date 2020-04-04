@@ -21,24 +21,87 @@ namespace GDIRain
         public List<droplet> drops = new List<droplet> { };
         public Bitmap bg;
         public Graphics g;
+
+        public Color rainCol = Color.LightBlue;
+        public Color bgCol = Color.Gray;
+
+        public Brush brushBG = Brushes.Gray;
         public Pen thick = new Pen(Brushes.LightBlue, 2);
+
+        public int flashOpacity = 255;
+        public bool flashing = false;
+        public bool flashSwitch = false;
+
+        public bool useWind = true;
+        public bool useLignting = false;
+
+        public int modifyerOnWind = 3;
+
+        public int divValSpawn = 50;
+
+        public bool activeResizing = true;
 
         private void Form1_Load(object sender, EventArgs e)
         {
             initialise();
-
-            for(int i = 0; i < 50; i++)
-            {
-                spawnDrop();
-            }
-
+            spawnDropsByWinWidth();    
             drawFrame.Start();
+            lightningFlash.Interval = rnd.Next(3000, 10000);
+            lightningFlash.Start();
         }
 
         public void initialise()
         {
             bg = new Bitmap(this.Width, this.Height);
             g = Graphics.FromImage(bg);
+        }
+
+        public void beginLightning()
+        {
+            if (useLignting) { flashing = true; }
+        }
+
+        private void drawFrame_Tick(object sender, EventArgs e)
+        {
+            spawnDropsByWinWidth();
+            g.FillRectangle(brushBG, 0, 0, bg.Width, bg.Height);
+            for(int i = 0; i < drops.Count; i++)
+            {
+                int drawX = drops[i].x;
+                int drawY = drops[i].y;
+                int length = drops[i].length;
+                drawY = bg.Height - drawY;
+                g.DrawLine(thick, drawX, drawY, drawX + modifyerOnWind, drawY - length);
+                drops[i].y -= (1 * drops[i].z);
+                drops[i].x -= modifyerOnWind;
+            }
+
+            if (flashing)
+            {
+                if(flashOpacity > 0)
+                {
+                    Color flashColor = Color.FromArgb(flashOpacity, 255, 255, 255);
+                    g.FillRectangle(new SolidBrush(flashColor), 0, 0, bg.Width, bg.Height);
+                    flashOpacity -= 4;
+                }
+                if(flashOpacity <= 0)
+                {
+                    flashOpacity = 255;
+                    flashing = false;
+                }
+            }
+
+            pictureBox1.Image = bg;
+            drops = cullDrops();
+        }
+
+        public void spawnDropsByWinWidth()
+        {
+            int cdrop = this.Width / divValSpawn;
+            for(int i = 0; i < cdrop; i++)
+            {
+                spawnDrop();
+            }
         }
 
         public void spawnDrop()
@@ -48,33 +111,6 @@ namespace GDIRain
             int newZ = rnd.Next(5, 20);
             int newlen = rnd.Next(5, 15);
             drops.Add(new droplet(newY, newX, newZ, newlen));
-        }
-
-        private void drawFrame_Tick(object sender, EventArgs e)
-        {
-            spawnDropsByWinWidth();
-            g.FillRectangle(Brushes.Gray, 0, 0, bg.Width, bg.Height);
-            for(int i = 0; i < drops.Count; i++)
-            {
-                int drawX = drops[i].x;
-                int drawY = drops[i].y;
-                int length = drops[i].length;
-                drawY = bg.Height - drawY;
-                g.DrawLine(thick, drawX, drawY, drawX + 3, drawY - length);
-                drops[i].y -= (1 * drops[i].z);
-                drops[i].x -= 3;
-            }
-            pictureBox1.Image = bg;
-            drops = cullDrops();
-        }
-
-        public void spawnDropsByWinWidth()
-        {
-            int cdrop = this.Width / 50;
-            for(int i = 0; i < cdrop; i++)
-            {
-                spawnDrop();
-            }
         }
 
         public List<droplet> cullDrops()
@@ -92,8 +128,52 @@ namespace GDIRain
 
         private void main_resized(object sender, EventArgs e)
         {
-            bg = new Bitmap(this.Width, this.Height);
-            g = Graphics.FromImage(bg);
+            if (activeResizing)
+            {
+                bg = new Bitmap(this.Width, this.Height);
+                g = Graphics.FromImage(bg);
+            }
+        }
+
+        private void main_kdown(object sender, KeyEventArgs e)
+        {
+            if(e.KeyCode == Keys.S)
+            {
+                using (var form = new settings(rainCol, bgCol, useWind, useLignting, divValSpawn, activeResizing))
+                {
+                    var result = form.ShowDialog();
+                    if (result == DialogResult.OK)
+                    {
+                        rainCol = form.newRain;
+
+                        bgCol = form.newBG;
+
+                        useWind = form.newWind;
+                        if (useWind){ modifyerOnWind = 3; }
+                        else{ modifyerOnWind = 0; }
+
+                        useLignting = form.newLightning;
+
+                        brushBG = new SolidBrush(bgCol);
+                        thick = new Pen(rainCol, 2);
+
+                        divValSpawn = form.newRainWeight;
+
+                        activeResizing = form.newActiveResize;
+                        if (activeResizing)
+                        {
+                            bg = new Bitmap(this.Width, this.Height);
+                            g = Graphics.FromImage(bg);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void lightningFlash_Tick(object sender, EventArgs e)
+        {
+            beginLightning();
+            lightningFlash.Interval = rnd.Next(3000, 30000);
         }
     }
 
