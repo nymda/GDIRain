@@ -97,7 +97,7 @@ namespace GDIRain
 
         public void spawnDropsByWinWidth()
         {
-            int cdrop = this.Width / divValSpawn;
+            int cdrop = bg.Width / divValSpawn;
             for(int i = 0; i < cdrop; i++)
             {
                 spawnDrop();
@@ -128,6 +128,7 @@ namespace GDIRain
 
         private void main_resized(object sender, EventArgs e)
         {
+            this.Text = "Rain | [S] Settings | " + this.Width + " x " + this.Height;
             if (activeResizing)
             {
                 bg = new Bitmap(this.Width, this.Height);

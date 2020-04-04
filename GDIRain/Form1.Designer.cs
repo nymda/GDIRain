@@ -63,7 +63,7 @@
             this.Controls.Add(this.pictureBox1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
             this.Name = "Form1";
-            this.Text = "Rain | [S] settings";
+            this.Text = "Rain | [S] settings | 640 x 480";
             this.Load += new System.EventHandler(this.Form1_Load);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.main_kdown);
             this.Resize += new System.EventHandler(this.main_resized);
